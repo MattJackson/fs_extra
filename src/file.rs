@@ -122,6 +122,7 @@ where
             let msg = format!("Path \"{}\" exists", msg);
             err!(&msg, ErrorKind::AlreadyExists);
         }
+        err!("Path exists", ErrorKind::AlreadyExists);
     }
 
     Ok(std::fs::copy(from, to)?)
@@ -192,6 +193,7 @@ where
             let msg = format!("Path \"{}\" exists", msg);
             err!(&msg, ErrorKind::AlreadyExists);
         }
+        err!("Path exists", ErrorKind::AlreadyExists);
     }
     let mut file_from = File::open(from)?;
     let mut buf = vec![0; options.buffer_size];
