@@ -118,10 +118,8 @@ where
             return Ok(0);
         }
 
-        if let Some(msg) = to.as_ref().to_str() {
-            let msg = format!("Path \"{}\" exists", msg);
-            err!(&msg, ErrorKind::AlreadyExists);
-        }
+        let msg = format!("Path \"{}\" exists", to.as_ref().display());
+        err!(&msg, ErrorKind::AlreadyExists);
     }
 
     Ok(std::fs::copy(from, to)?)
@@ -188,10 +186,8 @@ where
             return Ok(0);
         }
 
-        if let Some(msg) = to.as_ref().to_str() {
-            let msg = format!("Path \"{}\" exists", msg);
-            err!(&msg, ErrorKind::AlreadyExists);
-        }
+        let msg = format!("Path \"{}\" exists", to.as_ref().display());
+        err!(&msg, ErrorKind::AlreadyExists);
     }
     let mut file_from = File::open(from)?;
     let mut buf = vec![0; options.buffer_size];
