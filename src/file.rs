@@ -11,6 +11,7 @@ pub struct CopyOptions {
     /// Sets the option true for skip existing files.
     pub skip_exist: bool,
     /// Sets buffer size for copy/move work only with receipt information about process work.
+    /// Must be greater than zero for operations with progress.
     pub buffer_size: usize,
 }
 
@@ -118,10 +119,8 @@ where
             return Ok(0);
         }
 
-        if let Some(msg) = to.as_ref().to_str() {
-            let msg = format!("Path \"{}\" exists", msg);
-            err!(&msg, ErrorKind::AlreadyExists);
-        }
+        let msg = format!("Path \"{}\" exists", to.as_ref().display());
+        err!(&msg, ErrorKind::AlreadyExists);
     }
 
     Ok(std::fs::copy(from, to)?)
@@ -163,6 +162,9 @@ where
     Q: AsRef<Path>,
     F: FnMut(TransitProcess),
 {
+    if options.buffer_size == 0 {
+        err!("Buffer size must be greater than zero", ErrorKind::Other);
+    }
     let from = from.as_ref();
     if !from.exists() {
         if let Some(msg) = from.to_str() {
@@ -188,10 +190,8 @@ where
             return Ok(0);
         }
 
-        if let Some(msg) = to.as_ref().to_str() {
-            let msg = format!("Path \"{}\" exists", msg);
-            err!(&msg, ErrorKind::AlreadyExists);
-        }
+        let msg = format!("Path \"{}\" exists", to.as_ref().display());
+        err!(&msg, ErrorKind::AlreadyExists);
     }
     let mut file_from = File::open(from)?;
     let mut buf = vec![0; options.buffer_size];
