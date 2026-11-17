@@ -11,6 +11,7 @@ pub struct CopyOptions {
     /// Sets the option true for skip existing files.
     pub skip_exist: bool,
     /// Sets buffer size for copy/move work only with receipt information about process work.
+    /// Must be greater than zero for operations with progress.
     pub buffer_size: usize,
 }
 
@@ -161,6 +162,9 @@ where
     Q: AsRef<Path>,
     F: FnMut(TransitProcess),
 {
+    if options.buffer_size == 0 {
+        err!("Buffer size must be greater than zero", ErrorKind::Other);
+    }
     let from = from.as_ref();
     if !from.exists() {
         if let Some(msg) = from.to_str() {
