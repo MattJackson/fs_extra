@@ -195,10 +195,26 @@ where
     }
     let mut file_from = File::open(from)?;
     let mut buf = vec![0; options.buffer_size];
-    let file_size = file_from.metadata()?.len();
+    let metadata = file_from.metadata()?;
+    let file_size = metadata.len();
+    let permissions = metadata.permissions();
     let mut copied_bytes: u64 = 0;
 
-    let mut file_to = File::create(to)?;
+    let mut destination_options = std::fs::OpenOptions::new();
+    destination_options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+        // Do not create a private source's destination with broader permissions even briefly.
+        destination_options.mode(permissions.mode());
+    }
+    let mut file_to = destination_options.open(to)?;
+    // Like std::fs::copy, only regular files are chmod-ed (never FIFOs or devices). This sets
+    // the mode before any copied byte is written, and replaces the mode of an existing file.
+    let apply_permissions = file_to.metadata()?.is_file();
+    if apply_permissions {
+        file_to.set_permissions(permissions.clone())?;
+    }
     while !buf.is_empty() {
         match file_from.read(&mut buf) {
             Ok(0) => break,
@@ -217,6 +233,10 @@ where
             Err(ref e) if e.kind() == ::std::io::ErrorKind::Interrupted => {}
             Err(e) => return Err(::std::convert::From::from(e)),
         }
+    }
+    // A write may clear setuid/setgid bits; restore the source's final permissions.
+    if apply_permissions {
+        file_to.set_permissions(permissions)?;
     }
     Ok(file_size)
 }
